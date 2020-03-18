@@ -88,13 +88,14 @@ async fn main() {
         }
     };
 
-    if atty::is(atty::Stream::Stdout) {
-        println!("URL: {}", resp.url);
-        for (name, url) in resp.additional_urls {
-            println!("{}: {}", name, url);
-        }
-    } else {
-        println!("{}", resp.url);
+    print!("{}", resp.url);
+    // Ensure this gets printed first
+    use std::io::Write;
+    std::io::stdout().lock().flush();
+
+    eprintln!();
+    for (name, url) in resp.additional_urls {
+        eprintln!("{}: {}", name, url);
     }
 }
 
