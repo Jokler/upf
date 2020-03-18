@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderName, InvalidHeaderName, InvalidHeaderValue};
 use reqwest::multipart::{Form, Part};
@@ -60,15 +62,13 @@ pub async fn upload(
 
 pub struct UploadResponse {
     pub url: String,
-    pub thumbnail_url: Option<String>,
-    pub deletion_url: Option<String>,
+    pub additional_urls: HashMap<String, String>,
 }
 
 impl UploadResponse {
     pub fn find(body: &str, template: UploaderTemplate) -> Result<Self, UploadError> {
         let mut url = template.url;
-        let mut thumbnail_url = template.thumbnail_url;
-        let mut deletion_url = template.deletion_url;
+        let mut additional_urls = template.additional_urls;
 
         if let Some(regex) = template.regex {
             let re = Regex::new(&regex)?;
@@ -77,10 +77,9 @@ impl UploadResponse {
             for (i, cap) in captures.iter().enumerate() {
                 if let Some(cap) = cap {
                     url = url.replace(&format!("$regex:{}$", i), cap.as_str());
-                    thumbnail_url =
-                        thumbnail_url.map(|u| u.replace(&format!("$regex:{}$", i), cap.as_str()));
-                    deletion_url =
-                        deletion_url.map(|u| u.replace(&format!("$regex:{}$", i), cap.as_str()));
+                    for (_, url) in &mut additional_urls {
+                        *url = url.replace(&format!("$regex:{}$", i), cap.as_str());
+                    }
                 } else {
                     eprintln!("Regex capture {} was not found", i);
                 }
@@ -89,8 +88,7 @@ impl UploadResponse {
 
         Ok(Self {
             url,
-            thumbnail_url,
-            deletion_url,
+            additional_urls,
         })
     }
 }

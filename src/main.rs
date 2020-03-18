@@ -90,11 +90,8 @@ async fn main() {
 
     if atty::is(atty::Stream::Stdout) {
         println!("URL: {}", resp.url);
-        if let Some(thumb) = resp.thumbnail_url {
-            println!("Thumbnail URL: {}", thumb);
-        }
-        if let Some(del) = resp.deletion_url {
-            println!("Deletion URL: {}", del);
+        for (name, url) in resp.additional_urls {
+            println!("{}: {}", name, url);
         }
     } else {
         println!("{}", resp.url);

@@ -18,8 +18,7 @@ pub struct UploaderTemplate {
     //pub url_params: HashMap<String, String>,
     pub regex: Option<String>,
     pub url: String,
-    pub thumbnail_url: Option<String>,
-    pub deletion_url: Option<String>,
+    pub additional_urls: HashMap<String, String>,
     pub tags: Vec<String>,
 }
 
