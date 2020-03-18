@@ -1,0 +1,18 @@
+method = "POST"
+request_url = "https://jokler.xyz/api/upload"
+data = "Multipart"
+file_form = "file"
+
+regex = "^id:(([^/]+)/[^,]+),delete:(.+)$"
+
+tags = ["image", "text", "file"]
+
+url = "https://jokler.xyz/f/$regex:1$"
+
+[additional_urls]
+"Deletion URL" = "https://jokler.xyz/delete/$regex:2$/$regex:3$"
+
+[form]
+
+[headers]
+key = "insert auth key here"
