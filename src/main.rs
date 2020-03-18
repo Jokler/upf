@@ -10,13 +10,16 @@ use upf::UploaderTemplate;
 #[derive(Debug, StructOpt)]
 #[structopt(about = "An upload program to simplify using file sharing services")]
 struct Args {
+    /// Filename to upload
+    #[structopt(short, long)]
+    file_name: Option<String>,
+    /// Print additional information
+    #[structopt(short, long)]
+    debug: bool,
     /// Template to use for the upload
     template: String,
     /// File to upload
     file: Option<PathBuf>,
-    /// Filename to upload
-    #[structopt(short, long)]
-    file_name: Option<String>,
 }
 
 #[tokio::main]

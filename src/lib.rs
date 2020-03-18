@@ -11,6 +11,7 @@ pub async fn upload(
     template: UploaderTemplate,
     data: Vec<u8>,
     file_name: Option<String>,
+    debug: bool,
 ) -> Result<UploadResponse, UploadError> {
     let client = Client::new();
     let mut request = client.request(template.method.into(), &template.request_url);
@@ -48,6 +49,10 @@ pub async fn upload(
 
     if !status.is_success() {
         return Err(UploadError::Response(status, body));
+    }
+
+    if debug {
+        println!("Response body: {}", body);
     }
 
     UploadResponse::find(&body, template)
