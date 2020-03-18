@@ -80,17 +80,24 @@ async fn main() {
     if args.file_name.is_some() {
         file_name = args.file_name;
     }
-    match upf::upload(template, data, file_name).await {
-        Ok(resp) => {
-            println!("URL: {}", resp.url);
-            if let Some(thumb) = resp.thumbnail_url {
-                println!("Thumbnail URL: {}", thumb);
-            }
-            if let Some(del) = resp.deletion_url {
-                println!("Deletion URL: {}", del);
-            }
+    let resp = match upf::upload(template, data, file_name, args.debug).await {
+        Ok(r) => r,
+        Err(e) => {
+            print_error(&Box::new(e));
+            return;
         }
-        Err(e) => print_error(&Box::new(e)),
+    };
+
+    if atty::is(atty::Stream::Stdout) {
+        println!("URL: {}", resp.url);
+        if let Some(thumb) = resp.thumbnail_url {
+            println!("Thumbnail URL: {}", thumb);
+        }
+        if let Some(del) = resp.deletion_url {
+            println!("Deletion URL: {}", del);
+        }
+    } else {
+        println!("{}", resp.url);
     }
 }
 
