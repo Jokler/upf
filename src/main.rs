@@ -91,7 +91,9 @@ async fn main() {
     print!("{}", resp.url);
     // Ensure this gets printed first
     use std::io::Write;
-    std::io::stdout().lock().flush();
+    if let Err(e) = std::io::stdout().lock().flush() {
+        eprintln!("Failed to flush stdout: {}", e);
+    }
 
     eprintln!();
     for (name, url) in resp.additional_urls {
