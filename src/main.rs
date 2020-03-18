@@ -103,9 +103,9 @@ fn print_error(mut e: &dyn Error) {
     eprintln!("{}", text);
 }
 
-//1. ~/.config/upf/config (or $XDG_CONFIG_HOME/upf/config if set)
-//2. /etc/xdg/upf/config (or $XDG_CONFIG_DIRS/upf/config if set)
-//3. /etc/upf/config
+//1. ~/.config/upf/ (or $XDG_CONFIG_HOME/upf/ if set)
+//2. /etc/xdg/upf/ (or $XDG_CONFIG_DIRS/upf/ if set)
+//3. /etc/upf/
 fn find_config_dir() -> Option<PathBuf> {
     let mut config_home = std::env::var("XDG_CONFIG_HOME").ok().map(PathBuf::from);
     if config_home.is_none() {
