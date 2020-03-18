@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::ffi::OsStr;
-use std::fs::File;
+use std::fs::{OpenOptions, File};
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
@@ -10,9 +10,12 @@ use upf::UploaderTemplate;
 #[derive(Debug, StructOpt)]
 #[structopt(about = "An upload program to simplify using file sharing services")]
 struct Args {
-    /// Filename to upload
+    /// Overwrite filename used on upload
     #[structopt(short, long)]
     file_name: Option<String>,
+    /// Append output to the specified file
+    #[structopt(short, long)]
+    output: Option<PathBuf>,
     /// Print additional information
     #[structopt(short, long)]
     debug: bool,
@@ -96,8 +99,23 @@ async fn main() {
     }
 
     eprintln!();
-    for (name, url) in resp.additional_urls {
+    for (name, url) in &resp.additional_urls {
         eprintln!("{}: {}", name, url);
+    }
+
+    if let Some(path) = args.output {
+        if let Err(e) = (|| {
+            let mut file = OpenOptions::new().append(true).create(true).open(path)?;
+
+            file.write_all(format!("\nURL: {}\n", resp.url).as_bytes())?;
+            for (name, url) in &resp.additional_urls {
+                file.write_all(format!("{}: {}\n", name, url).as_bytes())?;
+            }
+
+            Ok::<(), std::io::Error>(())
+        })() {
+            eprintln!("Failed to write to output file: {}", e);
+        }
     }
 }
 
