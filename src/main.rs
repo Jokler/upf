@@ -29,7 +29,7 @@ struct Args {
 async fn main() {
     let args = Args::from_args();
 
-    let path = match find_config_dir() {
+    let mut path = match find_config_dir() {
         Some(p) => p,
         None => {
             eprintln!("Failed to find a valid config directory");
@@ -37,7 +37,8 @@ async fn main() {
         }
     };
 
-    let mut path = path.join(args.template);
+    path = path.join("templates/");
+    path = path.join(args.template);
     if path.extension() != Some(OsStr::new("toml")) {
         path.set_extension("toml");
     }
