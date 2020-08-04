@@ -100,11 +100,11 @@ pub enum UploadError {
     #[error("Invalid header name")]
     InvalidHeaderValue(#[from] InvalidHeaderValue),
     #[error("Failed to send request")]
-    Request(reqwest::Error),
+    Request(#[source] reqwest::Error),
     #[error("Received \"{0}\" from server: {1}")]
     Response(reqwest::StatusCode, String),
     #[error("Failed to parse response")]
-    ParseResponse(reqwest::Error),
+    ParseResponse(#[source] reqwest::Error),
     #[error("Failed to parse regex")]
     Regex(#[from] regex::Error),
     #[error("Regex failed to capture anything: {0}")]

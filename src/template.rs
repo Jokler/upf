@@ -57,10 +57,10 @@ impl UploaderTemplate {
 
 #[derive(Error, Debug)]
 pub enum TemplateError {
-    #[error("Failed to open file")]
-    OpenFile(io::Error),
-    #[error("Failed to read file")]
-    ReadFile(io::Error),
-    #[error("Failed to parse toml")]
+    #[error("Failed to open template file")]
+    OpenFile(#[source] io::Error),
+    #[error("Failed to read template file")]
+    ReadFile(#[source] io::Error),
+    #[error("Failed to parse template toml")]
     ParseToml(#[from] toml::de::Error),
 }
