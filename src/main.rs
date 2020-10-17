@@ -1,9 +1,9 @@
-use std::error::Error;
 use std::ffi::OsStr;
-use std::fs::{OpenOptions, File};
+use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
+use anyhow::{anyhow, Result, bail};
 use structopt::StructOpt;
 use upf::UploaderTemplate;
 
@@ -27,28 +27,27 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
+    if let Err(e) = run().await {
+        eprint!("ERROR: {}", e);
+        e.chain()
+            .skip(1)
+            .for_each(|cause| eprint!(": {}", cause));
+        eprintln!();
+        std::process::exit(1);
+    }
+}
+
+async fn run() -> Result<()> {
     let args = Args::from_args();
 
-    let mut path = match find_config_dir() {
-        Some(p) => p,
-        None => {
-            eprintln!("Failed to find a valid config directory");
-            return;
-        }
-    };
+    let mut path = find_config_dir().ok_or(anyhow!("Failed to find a valid config directory"))?;
 
     path = path.join("templates/");
     path = path.join(args.template);
     if path.extension() != Some(OsStr::new("toml")) {
         path.set_extension("toml");
     }
-    let template = match UploaderTemplate::from_file(path) {
-        Ok(t) => t,
-        Err(e) => {
-            print_error(&Box::new(e));
-            return;
-        }
-    };
+    let template = UploaderTemplate::from_file(path)?;
 
     let mut file_name: Option<String> = None;
     let mut data = Vec::new();
@@ -56,41 +55,26 @@ async fn main() {
         file_name = path
             .file_name()
             .and_then(|o| o.to_str().map(|s| s.to_owned()));
-        let file = match File::open(path) {
-            Ok(f) => f,
-            Err(e) => {
-                eprintln!("Failed to open file: {}", e);
-                return;
-            }
-        };
+        let file = File::open(path).map_err(|e| anyhow!("Failed to open file: {}", e))?;
         let mut buf_reader = BufReader::new(file);
-        if let Err(e) = buf_reader.read_to_end(&mut data) {
-            eprintln!("Failed to read file: {}", e);
-            return;
-        }
+        buf_reader
+            .read_to_end(&mut data)
+            .map_err(|e| anyhow!("Failed to read file: {}", e))?;
     } else if atty::isnt(atty::Stream::Stdin) {
-        if let Err(e) = std::io::stdin().read_to_end(&mut data) {
-            eprintln!("An error occurred while reading from stdin: {}", e);
-            return;
-        }
+        std::io::stdin()
+            .read_to_end(&mut data)
+            .map_err(|e| anyhow!("An error occurred while reading from stdin: {}", e))?;
         if args.file_name.is_none() {
             file_name = Some(String::from("stdin"));
         }
     } else {
-        eprintln!("Supply either a file path or pipe data into stdin");
-        return;
+        bail!("Supply either a file path or pipe data into stdin");
     }
 
     if args.file_name.is_some() {
         file_name = args.file_name;
     }
-    let resp = match upf::upload(template, data, file_name, args.debug).await {
-        Ok(r) => r,
-        Err(e) => {
-            print_error(&Box::new(e));
-            return;
-        }
-    };
+    let resp = upf::upload(template, data, file_name, args.debug).await?;
 
     print!("{}", resp.url);
     // Ensure this gets printed first
@@ -115,18 +99,11 @@ async fn main() {
 
             Ok::<(), std::io::Error>(())
         })() {
-            eprintln!("Failed to write to output file: {}", e);
+            bail!("Failed to write to output file: {}", e);
         }
     }
-}
 
-fn print_error(mut e: &dyn Error) {
-    let mut text = format!("{}", e);
-    while let Some(err) = e.source() {
-        text = format!("{}: {}", text, err);
-        e = err;
-    }
-    eprintln!("{}", text);
+    Ok(())
 }
 
 //1. ~/.config/upf/ (or $XDG_CONFIG_HOME/upf/ if set)
