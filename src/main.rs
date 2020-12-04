@@ -3,7 +3,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Result, bail};
+use anyhow::{anyhow, bail, Result};
 use structopt::StructOpt;
 use upf::UploaderTemplate;
 
@@ -29,9 +29,7 @@ struct Args {
 async fn main() {
     if let Err(e) = run().await {
         eprint!("ERROR: {}", e);
-        e.chain()
-            .skip(1)
-            .for_each(|cause| eprint!(": {}", cause));
+        e.chain().skip(1).for_each(|cause| eprint!(": {}", cause));
         eprintln!();
         std::process::exit(1);
     }
@@ -74,7 +72,7 @@ async fn run() -> Result<()> {
     if args.file_name.is_some() {
         file_name = args.file_name;
     }
-    let resp = upf::upload(template, data, file_name, args.debug).await?;
+    let resp = upf::upload(template, data, file_name.clone(), args.debug).await?;
 
     print!("{}", resp.url);
     // Ensure this gets printed first
@@ -92,6 +90,13 @@ async fn run() -> Result<()> {
         if let Err(e) = (|| {
             let mut file = OpenOptions::new().append(true).create(true).open(path)?;
 
+            file.write_all(
+                format!(
+                    "\nFilename: {}\n",
+                    file_name.as_ref().map(|s| s.as_str()).unwrap_or("UNNAMED")
+                )
+                .as_bytes(),
+            )?;
             file.write_all(format!("\nURL: {}\n", resp.url).as_bytes())?;
             for (name, url) in &resp.additional_urls {
                 file.write_all(format!("{}: {}\n", name, url).as_bytes())?;
