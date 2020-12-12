@@ -97,7 +97,7 @@ async fn run() -> Result<()> {
                 )
                 .as_bytes(),
             )?;
-            file.write_all(format!("\nURL: {}\n", resp.url).as_bytes())?;
+            file.write_all(format!("URL: {}\n", resp.url).as_bytes())?;
             for (name, url) in &resp.additional_urls {
                 file.write_all(format!("{}: {}\n", name, url).as_bytes())?;
             }
