@@ -45,7 +45,7 @@ async fn run() -> Result<()> {
     if path.extension() != Some(OsStr::new("toml")) {
         path.set_extension("toml");
     }
-    let template = UploaderTemplate::from_file(path)?;
+    let template = UploaderTemplate::from_file(path).unwrap();
 
     let mut file_name: Option<String> = None;
     let mut data = Vec::new();

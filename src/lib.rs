@@ -27,6 +27,9 @@ pub async fn upload(
 
     match template.data {
         DataType::NoBody => (),
+        DataType::Plain => {
+            request = request.body(data);
+        }
         DataType::Multipart => {
             let mut form = Form::new();
             if let Some(file_form) = &template.file_form {
@@ -97,16 +100,22 @@ impl UploadResponse {
 pub enum UploadError {
     #[error("Invalid header name")]
     InvalidHeaderName(#[from] InvalidHeaderName),
+
     #[error("Invalid header name")]
     InvalidHeaderValue(#[from] InvalidHeaderValue),
+
     #[error("Failed to send request")]
     Request(#[source] reqwest::Error),
+
     #[error("Received \"{0}\" from server: {1}")]
     Response(reqwest::StatusCode, String),
+
     #[error("Failed to parse response")]
     ParseResponse(#[source] reqwest::Error),
+
     #[error("Failed to parse regex")]
     Regex(#[from] regex::Error),
+
     #[error("Regex failed to capture anything: {0}")]
     RegexNotFound(String),
 }
